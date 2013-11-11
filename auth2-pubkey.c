@@ -508,10 +508,8 @@ user_key_command_allowed2(struct passwd *user_pw, Key *key)
 
 	u_char *blob;
 	u_int blen;
-	int n;
 	char *uu;
-	char *keytype;
-	char *keystr;
+	char keystr[SSH_MAX_PUBKEY_BYTES];
 
 	if (options.authorized_keys_command == NULL ||
 	    options.authorized_keys_command[0] != '/')
@@ -601,12 +599,10 @@ user_key_command_allowed2(struct passwd *user_pw, Key *key)
 		}
 
 		key_to_blob(key, &blob, &blen);
-		keytype = key_ssh_name(key);
 		uu = xmalloc(2*blen);
-		n = uuencode(blob, blen, uu, 2*blen);
-		keystr = xmalloc(n + strlen(keytype) + 2);
+		uuencode(blob, blen, uu, 2*blen);
 
-		snprintf(keystr, n + strlen(keytype) + 2, "%s %s", keytype, uu);
+		snprintf(keystr, SSH_MAX_PUBKEY_BYTES, "%s %s", key_ssh_name(key), uu);
 
 		execl(options.authorized_keys_command,
 		    options.authorized_keys_command, user_pw->pw_name, keystr, NULL);
@@ -689,7 +685,6 @@ user_key_allowed(struct passwd *pw, Key *key)
 		success = user_key_allowed2(pw, key, file);
 		free(file);
 	}
-
 	return success;
 }
 
